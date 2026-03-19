@@ -28,25 +28,162 @@ logger = logging.getLogger(__name__)
 
 CSS = """
 <style>
-  :root {
-    --bleu: #2563eb; --bleu-l: #dbeafe;
-    --gris: #6b7280; --border: #e2e8f0; --radius: 12px;
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  /* ── Reset & base ── */
+  html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
   }
+
+  /* ── Hide Streamlit chrome ── */
+  #MainMenu, footer, header { visibility: hidden; }
+  .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
+
+  /* ── Sidebar Apple style ── */
+  [data-testid="stSidebar"] {
+    background: #f9fafb !important;
+    border-right: 1px solid #e5e7eb !important;
+  }
+  [data-testid="stSidebar"] .stMarkdown,
+  [data-testid="stSidebar"] label,
+  [data-testid="stSidebar"] p { color: #374151 !important; font-size: 0.82rem !important; }
+  [data-testid="stSidebar"] h1,
+  [data-testid="stSidebar"] h2,
+  [data-testid="stSidebar"] h3 { color: #111827 !important; font-size: 0.9rem !important; font-weight: 700 !important; }
+  [data-testid="stSidebar"] [data-testid="stFileUploader"] {
+    border: 1.5px dashed #d1d5db !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+  }
+  [data-testid="stSidebar"] .stNumberInput input,
+  [data-testid="stSidebar"] .stSelectbox select,
+  [data-testid="stSidebar"] .stTimeInput input {
+    border-radius: 8px !important;
+    border: 1px solid #e5e7eb !important;
+    font-size: 0.85rem !important;
+    background: #fff !important;
+  }
+  [data-testid="stSidebar"] hr { border-color: #e5e7eb !important; margin: 0.6rem 0 !important; }
+
+  /* ── App header ── */
   .app-header {
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 55%, #0ea5e9 100%);
-    border-radius: var(--radius); padding: 24px 32px 20px;
-    margin-bottom: 20px; color: white;
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 0 18px 0; margin-bottom: 4px;
+    border-bottom: 1px solid #e5e7eb;
   }
-  .app-header h1 { font-size: 1.9rem; font-weight: 800; margin: 0; letter-spacing: -.5px; }
-  .app-header p  { font-size: .9rem; margin: 5px 0 0; opacity: .85; }
+  .app-header-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+  }
+  .app-header h1 {
+    font-size: 1.4rem; font-weight: 800; color: #111827;
+    margin: 0; letter-spacing: -0.5px; line-height: 1.2;
+  }
+  .app-header p { font-size: 0.78rem; color: #6b7280; margin: 2px 0 0 0; }
+
+  /* ── Score banner ── */
+  .score-banner {
+    display: flex; align-items: stretch; gap: 0;
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+  }
+  .score-left {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: white; padding: 16px 22px; min-width: 150px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .score-left .score-num {
+    font-size: 2.6rem; font-weight: 900; line-height: 1; letter-spacing: -1px;
+  }
+  .score-left .score-lbl { font-size: 0.8rem; font-weight: 600; margin-top: 2px; opacity: 0.95; }
+  .score-left .score-badges { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .score-left .score-badge {
+    background: rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 2px 8px; font-size: 0.7rem; font-weight: 500;
+  }
+  .metric-grid { display: flex; flex: 1; }
+  .metric-cell {
+    flex: 1; min-width: 80px; text-align: center;
+    padding: 14px 8px; border-right: 1px solid #f3f4f6;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .metric-cell:last-child { border-right: none; }
+  .metric-cell .mv {
+    font-size: 1.55rem; font-weight: 800; color: #111827;
+    letter-spacing: -0.5px; line-height: 1.1;
+  }
+  .metric-cell .mu { font-size: 0.72rem; color: #9ca3af; font-weight: 500; }
+  .metric-cell .ml { font-size: 0.65rem; color: #9ca3af; margin-top: 2px; }
+  .metric-cell .mv.green { color: #059669; }
+
+  /* ── Soleil pill ── */
   .soleil-row {
-    display: flex; gap: 14px; flex-wrap: wrap;
-    background: linear-gradient(90deg, #fef3c7, #fde68a);
-    border-radius: var(--radius); padding: 12px 18px; margin: 10px 0; align-items: center;
+    display: inline-flex; gap: 18px; align-items: center; flex-wrap: wrap;
+    background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 10px; padding: 8px 16px; margin: 8px 0 12px;
   }
-  .soleil-item .s-val { font-size: 1.05rem; font-weight: 700; color: #92400e; }
-  .soleil-item .s-lbl { font-size: .7rem; color: #b45309; }
-  @media (max-width: 640px) { .app-header h1 { font-size: 1.35rem; } }
+  .soleil-item .s-val { font-size: 0.9rem; font-weight: 700; color: #92400e; }
+  .soleil-item .s-lbl { font-size: 0.65rem; color: #b45309; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  /* ── Tabs ── */
+  [data-testid="stTabs"] [data-testid="stTab"] {
+    font-size: 0.82rem !important; font-weight: 600 !important;
+    padding: 6px 14px !important; border-radius: 8px 8px 0 0 !important;
+    color: #6b7280 !important; background: transparent !important;
+    border: none !important; border-bottom: 2px solid transparent !important;
+  }
+  [data-testid="stTabs"] [aria-selected="true"] {
+    color: #2563eb !important;
+    border-bottom: 2px solid #2563eb !important;
+    background: transparent !important;
+  }
+  [data-testid="stTabsContent"] { padding-top: 16px !important; }
+
+  /* ── Buttons ── */
+  .stButton > button {
+    border-radius: 9px !important; font-weight: 600 !important;
+    font-size: 0.84rem !important; padding: 8px 18px !important;
+    border: 1px solid #e5e7eb !important; background: #fff !important;
+    color: #374151 !important; transition: all 0.15s ease !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+  }
+  .stButton > button:hover {
+    background: #f9fafb !important; border-color: #d1d5db !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+  }
+  .stButton > button[kind="primary"] {
+    background: #2563eb !important; color: white !important;
+    border-color: #2563eb !important;
+  }
+
+  /* ── Expander ── */
+  [data-testid="stExpander"] {
+    border: 1px solid #e5e7eb !important; border-radius: 10px !important;
+    background: #fff !important; overflow: hidden;
+  }
+  [data-testid="stExpander"] summary {
+    font-size: 0.83rem !important; font-weight: 600 !important; color: #374151 !important;
+    padding: 10px 14px !important;
+  }
+
+  /* ── Info/Warning ── */
+  .stAlert { border-radius: 10px !important; font-size: 0.83rem !important; }
+
+  /* ── Dataframe ── */
+  [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden; }
+
+  /* ── General text ── */
+  .stMarkdown p, .stCaption { font-size: 0.83rem !important; color: #6b7280 !important; }
+
+  @media (max-width: 768px) {
+    .metric-cell .mv { font-size: 1.15rem; }
+    .score-left { min-width: 110px; padding: 12px 14px; }
+  }
 </style>
 """
 
@@ -672,12 +809,18 @@ def main():
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown("""
     <div class="app-header">
-      <h1>🚴‍♂️ Vélo &amp; Météo</h1>
-      <p>Analysez votre tracé GPX : météo en temps réel, cols UCI, profil interactif et zones d'entraînement.</p>
+      <div class="app-header-icon">🚴</div>
+      <div>
+        <h1>Vélo &amp; Météo</h1>
+        <p>Analysez votre tracé GPX — météo, cols UCI, profil interactif, zones d'entraînement.</p>
+      </div>
     </div>""", unsafe_allow_html=True)
 
     # ── SIDEBAR ───────────────────────────────────────────────────────────────
-    st.sidebar.header("⚙️ Paramètres")
+    st.sidebar.markdown(
+        "<p style='font-size:0.7rem;font-weight:700;text-transform:uppercase;"
+        "letter-spacing:0.8px;color:#9ca3af;margin:0 0 10px 0'>⚙️ Paramètres</p>",
+        unsafe_allow_html=True)
     fichier   = st.sidebar.file_uploader("📂 Fichier GPX", type=["gpx"])
     st.sidebar.divider()
     date_dep  = st.sidebar.date_input("📅 Date de départ", value=date.today())
@@ -793,7 +936,12 @@ def main():
     ph_fuseau.info("🌍 Fuseau : en attente…")
 
     if fichier is None:
-        st.info("👈 Importez un fichier GPX dans la barre latérale pour commencer l'analyse.")
+        st.markdown("""
+        <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+          <div style="font-size:3rem;margin-bottom:12px">🗺️</div>
+          <div style="font-size:1rem;font-weight:600;color:#374151;margin-bottom:6px">Importez un fichier GPX</div>
+          <div style="font-size:0.83rem">Déposez votre trace dans le panneau de gauche pour démarrer l'analyse.</div>
+        </div>""", unsafe_allow_html=True)
         return
 
     # ── CHARGEMENT ────────────────────────────────────────────────────────────
@@ -817,32 +965,38 @@ def main():
                 date_dep.strftime("%Y-%m-%d"))
 
     # ── CALCULS PARCOURS & VITESSE RÉELLE ────────────────────────────────────
-    with etapes.container():
-        with st.spinner("📐 Calcul du parcours…"):
-            checkpoints = []; profil_data = []
-            dist_tot = d_plus = d_moins = temps_s = prochain = cap = 0.0
-            vms = (vitesse * 1000) / 3600
-            for i in range(1, len(points_gpx)):
-                p1, p2 = points_gpx[i-1], points_gpx[i]
-                d  = p1.distance_2d(p2) or 0.0; dp = 0.0
-                if p1.elevation is not None and p2.elevation is not None:
-                    dif = p2.elevation - p1.elevation
-                    if dif > 0: dp = dif; d_plus += dif
-                    else: d_moins += abs(dif)
-                dist_tot += d; temps_s += (d + dp * 10) / vms
-                cap = calculer_cap(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
-                profil_data.append({"Distance (km)": round(dist_tot/1000, 3),
-                                    "Altitude (m)": p2.elevation or 0})
-                if temps_s >= prochain:
-                    hp = date_depart + timedelta(seconds=temps_s)
-                    checkpoints.append({
-                        "lat": p2.latitude, "lon": p2.longitude, "Cap": cap,
-                        "Heure": hp.strftime("%d/%m %H:%M"),
-                        "Heure_API": hp.replace(minute=0, second=0).strftime("%Y-%m-%dT%H:00"),
-                        "Km": round(dist_tot/1000, 1),
-                        "Alt (m)": int(p2.elevation) if p2.elevation else 0,
-                    })
-                    prochain += intervalle_sec
+    # Clé de cache : recalcule seulement si GPX, vitesse ou intervalle changent
+    _parcours_key = f"parcours_{id(points_gpx)}_{vitesse}_{intervalle}_{date_depart}"
+    if _parcours_key not in st.session_state:
+        with etapes.container():
+            with st.spinner("📐 Calcul du parcours…"):
+                checkpoints = []; profil_data = []
+                dist_tot = d_plus = d_moins = temps_s = prochain = cap = 0.0
+                vms = (vitesse * 1000) / 3600
+                for i in range(1, len(points_gpx)):
+                    p1, p2 = points_gpx[i-1], points_gpx[i]
+                    d  = p1.distance_2d(p2) or 0.0; dp = 0.0
+                    if p1.elevation is not None and p2.elevation is not None:
+                        dif = p2.elevation - p1.elevation
+                        if dif > 0: dp = dif; d_plus += dif
+                        else: d_moins += abs(dif)
+                    dist_tot += d; temps_s += (d + dp * 10) / vms
+                    cap = calculer_cap(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
+                    profil_data.append({"Distance (km)": round(dist_tot/1000, 3),
+                                        "Altitude (m)": p2.elevation or 0})
+                    if temps_s >= prochain:
+                        hp = date_depart + timedelta(seconds=temps_s)
+                        checkpoints.append({
+                            "lat": p2.latitude, "lon": p2.longitude, "Cap": cap,
+                            "Heure": hp.strftime("%d/%m %H:%M"),
+                            "Heure_API": hp.replace(minute=0, second=0).strftime("%Y-%m-%dT%H:00"),
+                            "Km": round(dist_tot/1000, 1),
+                            "Alt (m)": int(p2.elevation) if p2.elevation else 0,
+                        })
+                        prochain += intervalle_sec
+        st.session_state[_parcours_key] = (checkpoints, profil_data, dist_tot, d_plus, d_moins, temps_s, cap)
+    else:
+        checkpoints, profil_data, dist_tot, d_plus, d_moins, temps_s, cap = st.session_state[_parcours_key]
 
     # Calcul de la vitesse moyenne globale (vitesse réelle avec dénivelé)
     if temps_s > 0:
@@ -945,54 +1099,52 @@ def main():
         asc["Temps col"]      = f"{mins_col} min ({vit_col} km/h)"
         asc["Arrivée sommet"] = heure_sommet.strftime("%H:%M")
 
-    # ── AFFICHAGE HAUT DE PAGE ──
+    # ── AFFICHAGE HAUT DE PAGE ── Style Apple/Notion ──
     st.markdown(f"""
-    <div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);border-radius:12px;
-                padding:16px 24px;color:white;margin:12px 0;
-                display:flex;align-items:center;gap:0;flex-wrap:wrap">
-      <div style="min-width:160px;padding-right:24px;border-right:1px solid rgba(255,255,255,0.25)">
-        <div style="font-size:2.8rem;font-weight:900;line-height:1">{score['total']}<span style="font-size:1.2rem">/10</span></div>
-        <div style="font-size:.95rem;font-weight:600;margin-top:2px">{score['label']}</div>
-        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-          <span style="background:rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:.75rem">🌤️ {score['score_meteo']}/6</span>
-          <span style="background:rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:.75rem">🏔️ {score['score_cols']}/4</span>
+    <div class="score-banner">
+      <div class="score-left">
+        <div class="score-num">{score['total']}<span style="font-size:1.1rem;font-weight:600;opacity:0.7">/10</span></div>
+        <div class="score-lbl">{score['label']}</div>
+        <div class="score-badges">
+          <span class="score-badge">🌤️ {score['score_meteo']}/6</span>
+          <span class="score-badge">🏔️ {score['score_cols']}/4</span>
         </div>
       </div>
-      <div style="display:flex;gap:0;flex:1;flex-wrap:wrap;padding-left:8px">
-        <div style="flex:1;min-width:90px;text-align:center;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800">{round(dist_tot/1000,1)}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">km</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">📏 Distance</div>
+      <div class="metric-grid">
+        <div class="metric-cell">
+          <div class="mv">{round(dist_tot/1000,1)}</div>
+          <div class="mu">km</div>
+          <div class="ml">Distance</div>
         </div>
-        <div style="flex:1;min-width:90px;text-align:center;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800">{int(d_plus)}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">m</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">⬆️ D+</div>
+        <div class="metric-cell">
+          <div class="mv">{int(d_plus)}</div>
+          <div class="mu">m</div>
+          <div class="ml">D+</div>
         </div>
-        <div style="flex:1;min-width:90px;text-align:center;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800">{int(d_moins)}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">m</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">⬇️ D−</div>
+        <div class="metric-cell">
+          <div class="mv">{int(d_moins)}</div>
+          <div class="mu">m</div>
+          <div class="ml">D−</div>
         </div>
-        <div style="flex:1;min-width:90px;text-align:center;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800">{dh}h{dm:02d}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">min</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">⏱️ Durée</div>
+        <div class="metric-cell">
+          <div class="mv">{dh}h{dm:02d}</div>
+          <div class="mu">min</div>
+          <div class="ml">Durée</div>
         </div>
-        <div style="flex:1;min-width:110px;text-align:center;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800;color:#34d399">{vit_moy_reelle}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">km/h</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">🚴 Moy. Réelle</div>
+        <div class="metric-cell">
+          <div class="mv green">{vit_moy_reelle}</div>
+          <div class="mu">km/h</div>
+          <div class="ml">Moy. réelle</div>
         </div>
-        <div style="flex:1;min-width:90px;text-align:center;padding:6px 12px;border-right:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800">{heure_arr.strftime('%H:%M')}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">&nbsp;</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">🏁 Arrivée</div>
+        <div class="metric-cell">
+          <div class="mv">{heure_arr.strftime('%H:%M')}</div>
+          <div class="mu">&nbsp;</div>
+          <div class="ml">Arrivée</div>
         </div>
-        <div style="flex:1;min-width:90px;text-align:center;padding:6px 12px;border-left:1px solid rgba(255,255,255,0.2)">
-          <div style="font-size:1.9rem;font-weight:800">{calories}</div>
-          <div style="font-size:.9rem;color:rgba(255,255,255,0.85)">kcal</div>
-          <div style="font-size:.75rem;color:rgba(255,255,255,0.6)">🔥 Calories</div>
+        <div class="metric-cell">
+          <div class="mv">{calories}</div>
+          <div class="mu">kcal</div>
+          <div class="ml">Calories</div>
         </div>
       </div>
     </div>""", unsafe_allow_html=True)
@@ -1030,7 +1182,11 @@ def main():
         }
         fond_choisi = st.selectbox("🖼️ Fond de carte", options=list(FONDS_CARTE.keys()), index=0)
         tiles, attr = FONDS_CARTE[fond_choisi]
-        carte = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles, attr)
+        # Cache la carte dans session_state pour éviter de la reconstruire à chaque interaction UI
+        cache_key = f"carte_{fond_choisi}_{id(points_gpx)}"
+        if cache_key not in st.session_state:
+            st.session_state[cache_key] = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles, attr)
+        carte = st.session_state[cache_key]
         st_folium(carte, width="100%", height=700, returned_objects=[])
         st.divider()
         
