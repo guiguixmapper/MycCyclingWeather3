@@ -238,3 +238,105 @@ def extraire_meteo(donnees_api: dict, heure_api: str) -> dict:
         "effet":       "—",
         "ressenti":    wind_chill(temp, vent) if (temp is not None and vent is not None) else None,
     }
+
+# ==============================================================================
+# UV & POLLEN
+# ==============================================================================
+
+def label_uv(uv: float) -> tuple:
+    """Retourne (emoji, label, couleur) selon l'indice UV."""
+    if uv is None:    return "—",  "Inconnu",       "#9ca3af"
+    if uv < 3:        return "🟢", f"UV {uv} — Faible",      "#22c55e"
+    if uv < 6:        return "🟡", f"UV {uv} — Modéré",      "#eab308"
+    if uv < 8:        return "🟠", f"UV {uv} — Élevé",       "#f97316"
+    if uv < 11:       return "🔴", f"UV {uv} — Très élevé",  "#ef4444"
+    return                  "🟣", f"UV {uv} — Extrême",      "#8b5cf6"
+
+
+def label_pollen(val: float | None, nom: str) -> str | None:
+    """Retourne un label d'alerte pollen ou None si négligeable."""
+    if val is None or val < 10:  return None
+    if val < 50:   niv = "Modéré"
+    elif val < 200: niv = "Élevé"
+    else:           niv = "Très élevé"
+    return f"{nom} — {niv} ({int(val)} grains/m³)"
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def recuperer_uv_pollen(lat: float, lon: float, date_str: str) -> dict:
+    """
+    Récupère l'indice UV max et les alertes pollen pour la journée.
+
+    Sources :
+        - UV max      : Open-Meteo forecast (daily uv_index_max)
+        - Pollen      : Open-Meteo air-quality (hourly, max de la journée)
+
+    Returns:
+        {
+          "uv_max":      float | None,
+          "uv_emoji":    str,
+          "uv_label":    str,
+          "uv_couleur":  str,
+          "pollens":     [str, ...]   # liste de labels d'alerte, vide si RAS
+        }
+    """
+    res = {
+        "uv_max":     None,
+        "uv_emoji":   "—",
+        "uv_label":   "Données indisponibles",
+        "uv_couleur": "#9ca3af",
+        "pollens":    [],
+    }
+
+    # ── UV ──────────────────────────────────────────────────────────────────
+    try:
+        r = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude":  lat, "longitude": lon,
+                "daily":     "uv_index_max",
+                "start_date": date_str, "end_date": date_str,
+                "timezone":  "auto",
+            }, timeout=10)
+        r.raise_for_status()
+        vals = r.json().get("daily", {}).get("uv_index_max", [])
+        if vals and vals[0] is not None:
+            uv = round(vals[0], 1)
+            res["uv_max"]    = uv
+            emoji, label, coul = label_uv(uv)
+            res["uv_emoji"]   = emoji
+            res["uv_label"]   = label
+            res["uv_couleur"] = coul
+    except Exception as e:
+        logger.warning(f"UV indisponible : {e}")
+
+    # ── Pollen ──────────────────────────────────────────────────────────────
+    try:
+        r = requests.get(
+            "https://air-quality-api.open-meteo.com/v1/air-quality",
+            params={
+                "latitude":  lat, "longitude": lon,
+                "hourly":    "grass_pollen,birch_pollen,olive_pollen,alder_pollen,mugwort_pollen",
+                "start_date": date_str, "end_date": date_str,
+                "timezone":  "auto",
+            }, timeout=10)
+        r.raise_for_status()
+        hourly = r.json().get("hourly", {})
+
+        ESPECES = [
+            ("grass_pollen",    "🌾 Graminées"),
+            ("birch_pollen",    "🌳 Bouleau"),
+            ("olive_pollen",    "🫒 Olivier"),
+            ("alder_pollen",    "🌲 Aulne"),
+            ("mugwort_pollen",  "🌿 Armoise"),
+        ]
+        for clé, nom in ESPECES:
+            vals = [v for v in hourly.get(clé, []) if v is not None]
+            if vals:
+                lbl = label_pollen(max(vals), nom)
+                if lbl:
+                    res["pollens"].append(lbl)
+    except Exception as e:
+        logger.warning(f"Pollen indisponible : {e}")
+
+    return res
