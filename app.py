@@ -37,8 +37,21 @@ CSS = """
   footer { visibility: hidden; }  /* MainMenu conservé pour accès aux options thème */
   .block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
 
-  /* ── Sidebar ── */
-  [data-testid="stSidebar"] hr { margin: 0.5rem 0 !important; }
+  /* ── Palette Teal ── */
+  :root {
+    --teal:      #0d9488;
+    --teal-dark: #0f766e;
+    --teal-l:    rgba(13,148,136,0.12);
+  }
+
+  /* ── Sidebar redesign ── */
+  [data-testid="stSidebar"] {
+    padding-top: 0 !important;
+  }
+  [data-testid="stSidebar"] hr {
+    margin: 0.4rem 0 !important;
+    opacity: 0.3;
+  }
   [data-testid="stSidebar"] h1,
   [data-testid="stSidebar"] h2,
   [data-testid="stSidebar"] h3 {
@@ -46,6 +59,24 @@ CSS = """
   }
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] p { font-size: 0.82rem !important; }
+
+  /* Section label style */
+  .sb-section {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; opacity: 0.45; margin: 12px 0 6px 0;
+  }
+
+  /* Export button teal */
+  .export-btn a {
+    display: block; text-align: center;
+    background: var(--teal); color: white !important;
+    padding: 10px 16px; border-radius: 10px;
+    text-decoration: none; font-weight: 700;
+    font-size: 0.85rem; letter-spacing: 0.2px;
+    transition: background 0.15s ease;
+    box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+  }
+  .export-btn a:hover { background: var(--teal-dark); }
 
   /* ── App header ── */
   .app-header {
@@ -78,7 +109,7 @@ CSS = """
     background: rgba(128,128,128,0.04);
   }
   .score-left {
-    background: linear-gradient(135deg, #1e40af, #2563eb);
+    background: linear-gradient(135deg, #0f766e, #0d9488);
     color: white !important; padding: 16px 20px; min-width: 145px;
     display: flex; flex-direction: column; justify-content: center;
     flex-shrink: 0;
@@ -802,30 +833,51 @@ def main():
     </div>""", unsafe_allow_html=True)
 
     # ── SIDEBAR ───────────────────────────────────────────────────────────────
-    st.sidebar.markdown(
-        "<p style='font-size:0.7rem;font-weight:700;text-transform:uppercase;"
-        "letter-spacing:0.8px;color:#9ca3af;margin:0 0 10px 0'>⚙️ Paramètres</p>",
-        unsafe_allow_html=True)
-    fichier   = st.sidebar.file_uploader("📂 Fichier GPX", type=["gpx"])
-    st.sidebar.divider()
-    date_dep  = st.sidebar.date_input("📅 Date de départ", value=date.today())
-    heure_dep = st.sidebar.time_input("🕐 Heure de départ")
-    vitesse   = st.sidebar.number_input("🚴 Vitesse moy. plat (km/h)", 5, 60, 25)
-    st.sidebar.divider()
-    mode = st.sidebar.radio("📊 Mode d'analyse",
-                             ["⚡ Puissance", "🫀 Fréquence Cardiaque"], horizontal=True)
+    # ── Sidebar header ──
+    st.sidebar.markdown("""
+    <div style="padding:16px 0 10px 0;border-bottom:1px solid rgba(128,128,128,0.15);margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;
+                    background:linear-gradient(135deg,#0f766e,#0d9488);
+                    display:flex;align-items:center;justify-content:center;font-size:1rem">🚴</div>
+        <div>
+          <div style="font-weight:800;font-size:0.9rem">Vélo & Météo</div>
+          <div style="font-size:0.68rem;opacity:0.45">Analyse de tracé GPX</div>
+        </div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+    st.sidebar.markdown('<div class="sb-section">📂 Fichier</div>', unsafe_allow_html=True)
+    fichier   = st.sidebar.file_uploader("Trace GPX", type=["gpx"], label_visibility="collapsed")
+
+    st.sidebar.markdown('<div class="sb-section">🗓️ Sortie</div>', unsafe_allow_html=True)
+    date_dep  = st.sidebar.date_input("Date de départ", value=date.today(), label_visibility="collapsed")
+    col_h1, col_h2 = st.sidebar.columns([1,1])
+    with col_h1:
+        heure_dep = st.time_input("Heure départ", label_visibility="collapsed")
+    with col_h2:
+        vitesse = st.number_input("Vitesse plat km/h", 5, 60, 25, label_visibility="collapsed")
+    st.sidebar.caption(f"🕐 Heure départ   ·   ⚡ Vitesse plat km/h")
+
+    st.sidebar.markdown('<div class="sb-section">💪 Physiologie</div>', unsafe_allow_html=True)
+    mode = st.sidebar.radio("Mode", ["⚡ Puissance", "🫀 FC"], horizontal=True, label_visibility="collapsed")
     if mode == "⚡ Puissance":
-        ref_val = st.sidebar.number_input("⚡ FTP (W)", 50, 500, 220)
-        fc_max  = None; ftp_fc = ref_val
-        poids   = st.sidebar.number_input("⚖️ Poids cycliste + vélo (kg)", 40, 150, 75)
+        col_p1, col_p2 = st.sidebar.columns(2)
+        with col_p1: ref_val = st.number_input("FTP (W)", 50, 500, 220)
+        with col_p2: poids   = st.number_input("Poids kg", 40, 150, 75)
+        fc_max = None; ftp_fc = ref_val
     else:
-        ref_val = st.sidebar.number_input("❤️ FC max (bpm)", 100, 220, 185)
-        fc_max  = ref_val
-        ftp_fc  = st.sidebar.number_input("⚡ FTP estimé (W)", 50, 500, 220)
-        poids   = st.sidebar.number_input("⚖️ Poids cycliste + vélo (kg)", 40, 150, 75)
-    st.sidebar.divider()
-    intervalle = st.sidebar.selectbox("⏱️ Intervalle checkpoints météo",
-                    options=[5,10,15], index=1, format_func=lambda x: f"Toutes les {x} min")
+        col_p1, col_p2 = st.sidebar.columns(2)
+        with col_p1: ref_val = st.number_input("FC max", 100, 220, 185)
+        with col_p2: poids   = st.number_input("Poids kg", 40, 150, 75)
+        fc_max = ref_val
+        ftp_fc = st.sidebar.number_input("FTP estimé (W)", 50, 500, 220)
+
+    st.sidebar.markdown('<div class="sb-section">🌤️ Météo</div>', unsafe_allow_html=True)
+    intervalle = st.sidebar.selectbox("Intervalle",
+                    options=[5,10,15], index=1,
+                    format_func=lambda x: f"Checkpoints toutes les {x} min",
+                    label_visibility="collapsed")
     intervalle_sec = intervalle * 60
 
     # ── DÉTECTION DES MONTÉES ─────────────────────────────────────────────────
@@ -917,8 +969,9 @@ def main():
                  "Clé gratuite sur aistudio.google.com."
         )
 
-    ph_fuseau = st.sidebar.empty()
+    ph_fuseau  = st.sidebar.empty()
     ph_fuseau.info("🌍 Fuseau : en attente…")
+    ph_export  = st.sidebar.empty()   # placeholder pour le bouton export
 
     if fichier is None:
         st.markdown("""
@@ -1090,6 +1143,26 @@ def main():
         asc["Temps col"]      = f"{mins_col} min ({vit_col} km/h)"
         asc["Arrivée sommet"] = heure_sommet.strftime("%H:%M")
 
+    # ── EXPORT dans la sidebar ──────────────────────────────────────────────────
+    nom_f = f"Roadbook_{date_dep.strftime('%Y%m%d')}.html"
+    with ph_export.container():
+        st.sidebar.markdown('<div class="sb-section">📤 Export</div>', unsafe_allow_html=True)
+        if st.sidebar.button("📄 Télécharger le Roadbook", width="stretch"):
+            with st.sidebar.container():
+                with st.spinner("Génération..."):
+                    tiles_exp, attr_exp = "CartoDB positron", None
+                    carte_export = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles_exp, attr_exp)
+                    html_bytes = generer_html_resume(
+                        score, ascensions, resultats, dist_tot, d_plus, d_moins, temps_s,
+                        date_depart, heure_arr, vitesse, vit_moy_reelle, calories,
+                        carte_export, df_profil, ref_val, mode, poids,
+                        briefing_ia=st.session_state.get("briefing_ia"))
+                    b64 = base64.b64encode(html_bytes).decode()
+                    st.sidebar.markdown(
+                        f'<div class="export-btn"><a href="data:text/html;base64,{b64}" ' +
+                        f'download="{nom_f}">⬇️ {nom_f}</a></div>',
+                        unsafe_allow_html=True)
+
     # ── AFFICHAGE HAUT DE PAGE ── Style Apple/Notion ──
     st.markdown(f"""
     <div class="score-banner">
@@ -1179,30 +1252,7 @@ def main():
             st.session_state[cache_key] = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles, attr)
         carte = st.session_state[cache_key]
         st_folium(carte, width="100%", height=700, returned_objects=[])
-        st.divider()
-        
-        # BOUTON D'EXPORT MAGIQUE
-        if st.button("📤 Télécharger le Carnet de Route (HTML / PDF)", width="stretch"):
-            with st.spinner("Génération du fichier interactif en cours..."):
-                briefing_actuel = st.session_state.get("briefing_ia", None)
-                
-                # Création d'une carte TOUTE NEUVE pour l'export (évite le bug de superposition de Streamlit)
-                carte_export = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles, attr)
-
-                html_bytes = generer_html_resume(
-                    score, ascensions, resultats, dist_tot, d_plus, d_moins, temps_s, 
-                    date_depart, heure_arr, vitesse, vit_moy_reelle, calories, 
-                    carte_export, df_profil, ref_val, mode, poids, briefing_ia=briefing_actuel
-                )
-                    
-                nom_f = f"Roadbook_{date_dep.strftime('%Y%m%d')}.html"
-                b64   = base64.b64encode(html_bytes).decode()
-                st.markdown(
-                    f'<a href="data:text/html;base64,{b64}" download="{nom_f}" '
-                    f'style="display:block;text-align:center;background:#1e40af;color:white;'
-                    f'padding:10px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px">'
-                    f'⬇️ Télécharger {nom_f}</a>', unsafe_allow_html=True)
-                st.success("✅ Fichier prêt ! Ouvrez-le et cliquez sur le bouton bleu 'Enregistrer en PDF' situé en haut de la page.")
+        # Export géré via la sidebar (ph_export)
 
     with tab_profil:
         lbl_mode = "FTP" if mode == "⚡ Puissance" else "FC max"
@@ -1220,13 +1270,16 @@ def main():
             st.plotly_chart(
                 creer_figure_profil(df_profil, ascensions, vitesse, ref_val, mode, poids, idx_survol),
                 width='stretch')
-        st.markdown(f"**Zones d'entraînement ({lbl_mode}) :**")
-        cols_z = st.columns(6)
-        for j, (_, _, num, lbl, coul) in enumerate(zones_actives(mode)):
-            cols_z[j].markdown(
-                f'<div style="background:{coul};color:white;border-radius:6px;'
-                f'padding:6px;text-align:center;font-size:.72rem"><b>{lbl}</b></div>',
-                unsafe_allow_html=True)
+        # Légende zones compacte sous le graphique (une seule ligne discrète)
+        legende_zones = " · ".join(
+            f'<span style="display:inline-flex;align-items:center;gap:3px">'
+            f'<span style="width:8px;height:8px;border-radius:50%;background:{coul};display:inline-block"></span>'
+            f'<span style="font-size:0.7rem;opacity:0.7">{lbl}</span></span>'
+            for _, _, _, lbl, coul in zones_actives(mode)
+        )
+        st.markdown(
+            f'<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:10px">{legende_zones}</div>',
+            unsafe_allow_html=True)
 
     with tab_meteo:
         if err_meteo:
@@ -1389,7 +1442,7 @@ def main():
                 "Direction": cp.get("Dir","—"),
                 "Effet vent": cp.get("effet","—"),
             })
-        st.dataframe(pd.DataFrame(lignes), width='stretch', hide_index=True,
+        st.dataframe(pd.DataFrame(lignes), width='stretch', hide_index=True, height=600,
             column_config={
                 "Heure":       st.column_config.TextColumn("🕐 Heure"),
                 "Km":          st.column_config.NumberColumn("📏 Km"),
