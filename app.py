@@ -1431,20 +1431,22 @@ def main():
 
                         # On passe la VITESSE RÉELLE calculée à l'IA
                         briefing = generer_briefing(
-                            api_key=gemini_key, 
-                            dist_tot=dist_tot, 
-                            d_plus=d_plus, 
+                            api_key=gemini_key,
+                            dist_tot=dist_tot,
+                            d_plus=d_plus,
                             temps_s=temps_s,
                             calories=calories,
-                            score=score, 
-                            ascensions=ascensions, 
+                            score=score,
+                            ascensions=ascensions,
                             analyse_meteo=analyse_meteo,
                             resultats=resultats,
                             heure_depart=heure_dep.strftime('%H:%M'),
                             heure_arrivee=heure_arr.strftime('%H:%M'),
                             vitesse_moyenne=vit_moy_reelle,
                             infos_soleil=infos_soleil,
-                            contexte_date=contexte_date
+                            contexte_date=contexte_date,
+                            nb_points_eau=len(points_eau),
+                            uv_pollen=uv_pollen,
                         )
                         if briefing:
                             st.session_state.briefing_ia = briefing
