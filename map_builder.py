@@ -77,9 +77,9 @@ COULEURS_CAT = {
 }
 
 EMOJI_EAU = {
-    "fontaine": "⛲",
-    "source":   "🌊",
-    "borne":    "🚰",
+    "fontaine": "💧",
+    "source":   "💧",
+    "borne":    "💧",
     "eau":      "💧",
 }
 
@@ -88,10 +88,70 @@ EMOJI_EAU = {
 # POPUPS
 # ==============================================================================
 
+def _fleche_vent(dir_deg, vitesse, effet) -> str:
+    """
+    Flèche SVG rotative indiquant la direction D'OÙ vient le vent,
+    colorée selon la vitesse, avec label effet cycliste.
+    """
+    # Couleur selon vitesse
+    if vitesse is None or vitesse == 0:
+        coul = "#94a3b8"
+    elif vitesse < 10:  coul = "#22c55e"
+    elif vitesse < 25:  coul = "#eab308"
+    elif vitesse < 40:  coul = "#f97316"
+    else:               coul = "#ef4444"
+
+    # La flèche pointe dans la direction où va le vent (dir_deg + 180 = d'où il vient → où il va)
+    rotation = (dir_deg + 180) % 360 if dir_deg is not None else 0
+
+    # Couleur de fond de l'effet
+    effet_bg = {
+        "⬇️ Face":     "#fee2e2",
+        "⬆️ Dos":      "#dcfce7",
+        "↙️ Côté (D)": "#fef9c3",
+        "↘️ Côté (G)": "#fef9c3",
+    }.get(effet, "#f1f5f9")
+    effet_color = {
+        "⬇️ Face":     "#dc2626",
+        "⬆️ Dos":      "#16a34a",
+        "↙️ Côté (D)": "#ca8a04",
+        "↘️ Côté (G)": "#ca8a04",
+    }.get(effet, "#64748b")
+
+    svg = (
+        f'<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">'
+        f'  <circle cx="22" cy="22" r="20" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>'
+        f'  <g transform="rotate({rotation}, 22, 22)">'
+        f'    <polygon points="22,6 27,32 22,28 17,32" fill="{coul}" opacity="0.95"/>'
+        f'    <circle cx="22" cy="22" r="3" fill="{coul}"/>'
+        f'  </g>'
+        f'</svg>'
+    )
+
+    vitesse_str = f"{int(vitesse)} km/h" if vitesse else "— km/h"
+    effet_str   = effet if effet and effet != "—" else "—"
+
+    return (
+        f'<div style="display:flex;align-items:center;gap:10px;margin-top:6px">'
+        f'  {svg}'
+        f'  <div>'
+        f'    <div style="font-size:13px;font-weight:700;color:#1e293b">{vitesse_str}</div>'
+        f'    <div style="font-size:10px;color:#64748b">rafales : {{}}</div>'
+        f'    <div style="display:inline-block;margin-top:3px;padding:2px 7px;border-radius:10px;'
+        f'         font-size:10px;font-weight:600;background:{effet_bg};color:{effet_color}">'
+        f'      {effet_str}</div>'
+        f'  </div>'
+        f'</div>'
+    )
+
+
 def _popup_meteo(cp: dict, t: float) -> str:
-    res = cp.get("ressenti")
-    pp  = cp.get("pluie_pct")
-    vv  = cp.get("vent_val", 0) or 0
+    res    = cp.get("ressenti")
+    pp     = cp.get("pluie_pct")
+    vv     = cp.get("vent_val", 0) or 0
+    rg     = cp.get("rafales_val", "—")
+    dir_deg = cp.get("dir_deg")
+    effet  = cp.get("effet", "—")
 
     barre_pluie = ""
     if pp is not None:
@@ -107,18 +167,20 @@ def _popup_meteo(cp: dict, t: float) -> str:
         if res else ""
     )
 
+    fleche = _fleche_vent(dir_deg, vv, effet).format(rg if rg else "—")
+
     return (
-        '<div style="font-family:-apple-system,sans-serif;font-size:12px;min-width:200px">'
+        '<div style="font-family:-apple-system,sans-serif;font-size:12px;min-width:210px">'
         f'<div style="font-weight:700;font-size:13px;border-bottom:1px solid #e2e8f0;'
         f'padding-bottom:5px;margin-bottom:7px">'
         f'🕐 {cp["Heure"]} — Km {cp["Km"]}</div>'
         f'<div style="font-size:15px;margin-bottom:4px">'
         f'{cp.get("Ciel","—")} <b>{t}°C</b>{ressenti_line}</div>'
         f'{barre_pluie}'
-        f'<div style="margin-top:7px;padding-top:6px;border-top:1px solid #f1f5f9;font-size:11px">'
-        f'💨 <b>{vv} km/h</b> du {cp.get("Dir","—")} '
-        f'— Rafales : {cp.get("rafales_val","—")} km/h<br>'
-        f'🚴 Effet : <b>{cp.get("effet","—")}</b>'
+        f'<div style="padding-top:6px;border-top:1px solid #f1f5f9">'
+        f'  <div style="font-size:11px;color:#64748b;margin-bottom:2px">'
+        f'    💨 Vent du {cp.get("Dir","—")}</div>'
+        f'  {fleche}'
         f'</div></div>'
     )
 
