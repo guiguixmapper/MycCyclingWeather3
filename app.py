@@ -185,7 +185,7 @@ from climbing import (
 from weather import (
     recuperer_fuseau, recuperer_meteo_batch, recuperer_soleil,
     extraire_meteo, direction_vent_relative, wind_chill,
-    label_wind_chill, obtenir_icone_meteo,
+    label_wind_chill, obtenir_icone_meteo, recuperer_uv_pollen,
 )
 from overpass import enrichir_cols, recuperer_points_eau
 from map_builder import creer_carte as _creer_carte_mb
@@ -949,6 +949,12 @@ def main():
                 points_gpx[0].latitude, points_gpx[0].longitude,
                 date_dep.strftime("%Y-%m-%d"))
 
+    with etapes.container():
+        with st.spinner("🌞 UV & Pollen…"):
+            uv_pollen = recuperer_uv_pollen(
+                points_gpx[0].latitude, points_gpx[0].longitude,
+                date_dep.strftime("%Y-%m-%d"))
+
     # ── CALCULS PARCOURS & VITESSE RÉELLE ────────────────────────────────────
     # Clé de cache : recalcule seulement si GPX, vitesse ou intervalle changent
     _parcours_key = f"parcours_{id(points_gpx)}_{vitesse}_{intervalle}_{date_depart}"
@@ -1226,6 +1232,38 @@ def main():
         if err_meteo:
             st.warning("⚠️ Données météo indisponibles.")
         else:
+            # ── UV & POLLEN ────────────────────────────────────────────────
+            uv_col, poll_col = st.columns([1, 2])
+            with uv_col:
+                uv = uv_pollen.get("uv_max")
+                emoji_uv = uv_pollen.get("uv_emoji", "—")
+                label_uv = uv_pollen.get("uv_label", "—")
+                coul_uv  = uv_pollen.get("uv_couleur", "#9ca3af")
+                st.markdown(f"""
+                <div style="border:1px solid rgba(128,128,128,0.18);border-radius:12px;
+                            padding:14px 18px;background:rgba(128,128,128,0.04)">
+                  <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
+                              letter-spacing:0.5px;opacity:0.5;margin-bottom:6px">☀️ Indice UV max</div>
+                  <div style="font-size:2rem;font-weight:900;color:{coul_uv};line-height:1">
+                    {uv if uv is not None else "—"}</div>
+                  <div style="font-size:0.8rem;color:{coul_uv};font-weight:600;margin-top:4px">
+                    {emoji_uv} {label_uv.split("—")[1].strip() if "—" in label_uv else label_uv}</div>
+                  {"<div style=\"font-size:0.75rem;opacity:0.55;margin-top:4px\">🧴 Crème solaire recommandée</div>" if uv and uv >= 3 else ""}
+                </div>""", unsafe_allow_html=True)
+
+            with poll_col:
+                pollens = uv_pollen.get("pollens", [])
+                st.markdown(f"""
+                <div style="border:1px solid rgba(128,128,128,0.18);border-radius:12px;
+                            padding:14px 18px;background:rgba(128,128,128,0.04);height:100%">
+                  <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
+                              letter-spacing:0.5px;opacity:0.5;margin-bottom:8px">🌿 Alertes Pollen</div>
+                  {"".join(f'<div style="font-size:0.83rem;font-weight:500;padding:3px 0">{p}</div>' for p in pollens)
+                    if pollens else
+                    '<div style="font-size:0.83rem;opacity:0.55">✅ Aucune alerte pollen significative</div>'}
+                </div>""", unsafe_allow_html=True)
+
+            st.divider()
             st.caption("Température · Vent & Rafales · Probabilité de pluie.")
             st.plotly_chart(creer_figure_meteo(resultats), width='stretch')
             c1, c2 = st.columns(2)
