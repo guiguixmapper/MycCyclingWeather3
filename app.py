@@ -65,7 +65,8 @@ from weather import (
     extraire_meteo, direction_vent_relative, wind_chill,
     label_wind_chill, obtenir_icone_meteo,
 )
-from overpass import enrichir_cols
+from overpass import enrichir_cols, recuperer_points_eau
+from map_builder import creer_carte as _creer_carte_mb
 from gemini_coach import generer_briefing
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -899,6 +900,12 @@ def main():
         asc.setdefault("Nom", "—")
         asc.setdefault("Nom OSM alt", None)
 
+    # ── POINTS D'EAU ─────────────────────────────────────────────────────────────
+    with etapes.container():
+        with st.spinner("💧 Recherche des points d'eau…"):
+            coords_gpx_tuples = tuple((p.latitude, p.longitude) for p in points_gpx[::5])
+            points_eau = recuperer_points_eau(coords_gpx_tuples)
+
     # ── MÉTÉO (AVEC MÉMOIRE LOCALE) ───────────────────────────────────────────
     with etapes.container():
         with st.spinner("📡 Récupération météo..."):
@@ -1023,7 +1030,7 @@ def main():
         }
         fond_choisi = st.selectbox("🖼️ Fond de carte", options=list(FONDS_CARTE.keys()), index=0)
         tiles, attr = FONDS_CARTE[fond_choisi]
-        carte = creer_carte(points_gpx, resultats, ascensions, tiles, attr)
+        carte = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles, attr)
         st_folium(carte, width="100%", height=700, returned_objects=[])
         st.divider()
         
@@ -1033,7 +1040,7 @@ def main():
                 briefing_actuel = st.session_state.get("briefing_ia", None)
                 
                 # Création d'une carte TOUTE NEUVE pour l'export (évite le bug de superposition de Streamlit)
-                carte_export = creer_carte(points_gpx, resultats, ascensions, tiles, attr)
+                carte_export = _creer_carte_mb(points_gpx, resultats, ascensions, points_eau, tiles, attr)
 
                 html_bytes = generer_html_resume(
                     score, ascensions, resultats, dist_tot, d_plus, d_moins, temps_s, 
