@@ -333,13 +333,53 @@ def creer_carte(
         if t is None:
             continue
         coul = _couleur_temp(t)
+        dir_deg = cp.get("dir_deg")
+        vv      = cp.get("vent_val", 0) or 0
+        effet   = cp.get("effet", "—")
+
+        # Couleur flèche selon vitesse
+        if vv == 0:       fc = "#94a3b8"
+        elif vv < 10:     fc = "#22c55e"
+        elif vv < 25:     fc = "#eab308"
+        elif vv < 40:     fc = "#f97316"
+        else:             fc = "#ef4444"
+
+        # Couleur badge effet
+        effet_bg  = {"⬇️ Face":"#fee2e2","⬆️ Dos":"#dcfce7","↙️ Côté (D)":"#fef9c3","↘️ Côté (G)":"#fef9c3"}.get(effet,"#f1f5f9")
+        effet_col = {"⬇️ Face":"#dc2626","⬆️ Dos":"#16a34a","↙️ Côté (D)":"#ca8a04","↘️ Côté (G)":"#ca8a04"}.get(effet,"#64748b")
+
+        rotation = (dir_deg + 180) % 360 if dir_deg is not None else 0
+
+        svg_arrow = (
+            f'<svg width="32" height="32" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">'
+            f'<circle cx="22" cy="22" r="20" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>'
+            f'<g transform="rotate({rotation},22,22)">'
+            f'<polygon points="22,6 27,32 22,28 17,32" fill="{fc}"/>'
+            f'<circle cx="22" cy="22" r="3" fill="{fc}"/>'
+            f'</g></svg>'
+        )
+
+        tooltip_html = (
+            f'<div style="font-family:-apple-system,sans-serif;font-size:12px;'
+            f'background:white;padding:8px 10px;border-radius:8px;'
+            f'box-shadow:0 2px 8px rgba(0,0,0,0.15);min-width:190px">'
+            f'<div style="font-weight:700;margin-bottom:5px">🕐 {cp["Heure"]} · Km {cp["Km"]}</div>'
+            f'<div style="margin-bottom:5px">{cp.get("Ciel","—")} <b>{t}°C</b></div>'
+            f'<div style="display:flex;align-items:center;gap:8px">'
+            f'  {svg_arrow}'
+            f'  <div>'
+            f'    <div style="font-size:12px;font-weight:600">{vv} km/h du {cp.get("Dir","—")}</div>'
+            f'    <div style="display:inline-block;margin-top:2px;padding:1px 6px;border-radius:8px;'
+            f'         font-size:10px;font-weight:600;background:{effet_bg};color:{effet_col}">'
+            f'      {effet}</div>'
+            f'  </div>'
+            f'</div></div>'
+        )
+
         folium.Marker(
             [cp["lat"], cp["lon"]],
             popup=folium.Popup(_popup_meteo(cp, t), max_width=240),
-            tooltip=folium.Tooltip(
-                f"{cp['Heure']} · {cp.get('Ciel','')}{t}°C · 💨{cp.get('vent_val',0)} km/h",
-                sticky=True,
-            ),
+            tooltip=folium.Tooltip(tooltip_html, sticky=True),
             icon=folium.DivIcon(
                 html=_badge(f"{t}°", coul),
                 icon_size=(50, 24), icon_anchor=(25, 12),
