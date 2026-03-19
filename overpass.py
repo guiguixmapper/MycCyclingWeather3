@@ -209,3 +209,74 @@ def enrichir_cols(ascensions: list, points_gpx: list) -> list:
         asc["Nom OSM alt"] = meilleur["alt"]
 
     return ascensions
+
+
+# ==============================================================================
+# POINTS D'EAU
+# ==============================================================================
+
+RAYON_EAU_M = 1500  # mètres — distance max entre le tracé et un point d'eau
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def recuperer_points_eau(coords_gpx: list) -> list:
+    """
+    Récupère les fontaines, sources et points d'eau potable à proximité du tracé.
+    Returns: liste de dicts {"lat", "lon", "nom", "type"}.
+    """
+    if not coords_gpx:
+        return []
+
+    lats = [lat for lat, lon in coords_gpx]
+    lons = [lon for lat, lon in coords_gpx]
+    min_lat = min(lats) - 0.01
+    max_lat = max(lats) + 0.01
+    min_lon = min(lons) - 0.01
+    max_lon = max(lons) + 0.01
+
+    query = f"""
+[out:json][timeout:20][bbox:{min_lat:.5f},{min_lon:.5f},{max_lat:.5f},{max_lon:.5f}];
+(
+  node["amenity"="drinking_water"];
+  node["amenity"="water_point"];
+  node["natural"="spring"]["drinking_water"="yes"];
+  node["natural"="spring"]["name"];
+);
+out body;
+"""
+    pts_ref = coords_gpx[::20]
+    data = None
+    for url in OVERPASS_URLS:
+        try:
+            r = requests.post(url, data={"data": query},
+                              headers={"User-Agent": "VeloMeteoApp/7.0"},
+                              timeout=20)
+            if r.status_code == 200:
+                data = r.json(); break
+        except Exception as e:
+            logger.warning(f"Points d'eau — {url} : {e}")
+
+    if not data:
+        st.toast("⚠️ Points d'eau indisponibles (Overpass timeout).")
+        return []
+
+    points = []
+    for el in data.get("elements", []):
+        lat_w, lon_w = el["lat"], el["lon"]
+        tags = el.get("tags", {})
+        for lat_p, lon_p in pts_ref:
+            if abs(lat_w - lat_p) < 0.015 and abs(lon_w - lon_p) < 0.015:
+                dist = _haversine(lat_w, lon_w, lat_p, lon_p)
+                if dist <= RAYON_EAU_M:
+                    amenity = tags.get("amenity", "")
+                    natural = tags.get("natural", "")
+                    if amenity == "drinking_water":   type_eau = "fontaine"
+                    elif amenity == "water_point":    type_eau = "borne"
+                    elif natural == "spring":         type_eau = "source"
+                    else:                             type_eau = "eau"
+                    points.append({
+                        "lat":  lat_w, "lon":  lon_w,
+                        "nom":  tags.get("name", "Point d'eau"),
+                        "type": type_eau,
+                    })
+                    break
+    return points
