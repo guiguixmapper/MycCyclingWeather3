@@ -124,26 +124,15 @@ CSS = """
     text-transform: uppercase; letter-spacing: 0.4px;
   }
 
-  /* ── Tabs ── */
-  /* Masquer la barre rouge animée de Streamlit */
-  [data-testid="stTabs"] [role="tablist"]::before,
-  [data-testid="stTabs"] [role="tablist"]::after { display: none !important; }
-  div[role="tablist"] > div[style*="position: absolute"] { display: none !important; }
-
+  /* ── Tabs — barre rouge native Streamlit, pas de surcharge couleur ── */
   [data-testid="stTabs"] [data-testid="stTab"] {
     font-size: 0.84rem !important; font-weight: 600 !important;
     padding: 6px 16px !important;
-    background: transparent !important; border: none !important;
-    border-bottom: 2px solid transparent !important; border-radius: 0 !important;
-    opacity: 0.75 !important;
+    background: transparent !important;
+    opacity: 0.7 !important;
   }
-  [data-testid="stTabs"] [data-testid="stTab"]:hover {
-    opacity: 1 !important;
-  }
-  [data-testid="stTabs"] [aria-selected="true"] {
-    opacity: 1 !important; color: #2563eb !important;
-    border-bottom: 2px solid #2563eb !important;
-  }
+  [data-testid="stTabs"] [data-testid="stTab"]:hover { opacity: 1 !important; }
+  [data-testid="stTabs"] [aria-selected="true"] { opacity: 1 !important; }
   [data-testid="stTabsContent"] { padding-top: 14px !important; }
 
   /* ── Buttons ── */
