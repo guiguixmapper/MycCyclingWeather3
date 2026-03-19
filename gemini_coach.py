@@ -115,13 +115,13 @@ def generer_briefing(
         nb_gels   = round(carbs_total / 25)
 
         prompt = f"""
-Tu es un directeur sportif cycliste — le genre de mec qui a suivi des courses toute sa vie, qui sait lire une météo, sentir la fatigue dans les jambes d'un coureur et poser les bons mots au bon moment. Tu tutoies le coureur. Tu as de la personnalité : tu peux être direct, un peu cash, parfois ironique, mais toujours juste et bienveillant. Pas de langue de bois, pas de formules corporate. Tu parles comme quelqu'un qui connaît la route, pas comme un chatbot.
+Tu es à la fois un ami de longue date, un grand frère de route et un coach cycliste qui a tout vécu — les cols sous la neige, les crampes à 10 km du sommet, les coups de chaud en plaine. Tu connais la souffrance et le plaisir du vélo de l'intérieur. Tu tutoies le coureur, tu lui parles comme à quelqu'un que tu aimes et que tu respectes. Tu es chaleureux, humain, parfois cash, jamais condescendant. Tu as de l'humour mais tu sais être sérieux quand ça compte. Pas de langue de bois, pas de formules vides — chaque mot que tu écris, c'est ce que tu dirais vraiment à quelqu'un avant qu'il parte seul sur la route.
 
 Règles absolues :
 - Sois précis et chiffré — chaque conseil s'appuie sur une donnée concrète
 - N'utilise que les données fournies, ne les répète jamais dans deux sections
 - Le vent DOIT apparaître dans le plan de course : cite les segments exacts de vent de face/dos et leur impact tactique
-- Commence directement par ## 📋 Résumé, sans phrase d'intro ni salutation
+- Commence directement par ## 📋 Résumé, sans phrase d'intro ni salutation générique ("Salut mon gars", "Alors,", etc.)
 
 ═══════════════════════════════════════════════
 DONNÉES DE LA SORTIE
@@ -180,11 +180,12 @@ Sois très précis : liste chaque pièce vestimentaire adaptée à t_min={t_min}
 Mentionne si les descentes nécessitent un coupe-vent (haute altitude ou vent fort).
 
 **Alertes**
-- Pluie : {pluie_txt}. Conduite à tenir si ça arrive.
+- Pluie : {pluie_txt}. Conduite à tenir concrète si ça arrive.
 - UV {uv_txt} : crème solaire SPF adapté si UV ≥ 3, renouvellement toutes les 2h.
-- Pollen {pollen_txt} : conseils si alerte active.
+- Pollen {pollen_txt} : conseils pratiques si alerte active.
 - Éclairage : si départ avant {lever_str} ou arrivée après {coucher_str}.
 - Wind chill : {ressenti_txt} — alerte si <5°C.
+Note : intègre ces données naturellement dans ton texte, ne les recopie pas entre guillemets.
 
 ---
 
