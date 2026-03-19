@@ -162,7 +162,10 @@ with t_profil:
     fig.update_layout(height=400, margin=dict(l=0,r=0,t=0,b=0), template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
     st.plotly_chart(fig, use_container_width=True)
     if ascensions:
-        st.dataframe(pd.DataFrame(ascensions)[["Catégorie", "Nom", "Longueur", "Dénivelé", "Pente moy."]], use_container_width=True, hide_index=True)
+        df_asc = pd.DataFrame(ascensions)
+        if "Nom" not in df_asc.columns:
+            df_asc["Nom"] = "—"
+        st.dataframe(df_asc[["Catégorie", "Nom", "Longueur", "Dénivelé", "Pente moy."]], use_container_width=True, hide_index=True)
 
 with t_coach:
     if gemini_key and st.button("Demander le briefing du Directeur Sportif"):
