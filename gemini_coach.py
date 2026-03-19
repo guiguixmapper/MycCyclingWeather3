@@ -163,7 +163,17 @@ Donne le ton de la sortie en une phrase qui claque — le coureur doit savoir à
 ## 🌤️ Météo & Équipement
 
 **Conditions du jour**
-Synthèse temp + vent en 2 phrases.
+Synthèse température en 2 phrases : fourchette min/max, tendance sur la journée.
+
+**Vent**
+Section dédiée au vent — obligatoire, même si vent faible.
+Données : {vent_txt} (rafales max {vent_max} km/h).
+Explique l'impact concret sur la sortie : sur quelles portions il sera de face, de dos, de côté.
+Le coureur roule SEUL — pas de roue, pas de peloton. Adapte les conseils en conséquence :
+- Vent de face : réduire la cadence, adopter une position plus aéro (baisser les coudes, rentrer la tête), ne pas se battre contre lui
+- Vent de dos : profiter pour récupérer ou placer une relance sans effort supplémentaire
+- Vent de côté : vigilance sur la tenue de trajectoire, surtout en descente
+Donne le ressenti global : est-ce que le vent est une contrainte majeure ce jour-là ou un facteur mineur ?
 
 **Tenue**
 Sois très précis : liste chaque pièce vestimentaire adaptée à t_min={t_min}°C au départ.
@@ -184,11 +194,12 @@ Décompose en phases chronologiques avec les kilomètres et heures estimées.
 Pour chaque phase : niveau d'effort, raison précise (vent/pente/chaleur/fatigue cumulée), conseil tactique concret.
 Pour chaque ascension : heure d'attaque, stratégie de montée (gestion de l'effort sur les passages à X%), gestion de la descente.
 
-IMPORTANT — Le vent est une donnée clé de ce brief :
+IMPORTANT — Le vent dans le plan de course (le coureur est SEUL, pas de roue ni de peloton) :
 Données vent : {vent_txt} (rafales max {vent_max} km/h)
-→ Pour chaque segment de vent de face : dis-lui de baisser la cadence, chercher l'abri, ne pas partir dans le rouge
-→ Pour chaque segment de vent de dos : dis-lui d'en profiter pour récupérer ou relancer selon sa fatigue
-→ Ces infos doivent apparaître naturellement dans les phases, pas dans une liste séparée
+→ Vent de face sur un segment : baisser la cadence, position aéro, ne pas se battre inutilement
+→ Vent de dos : récupérer ou relancer selon la fatigue du moment
+→ Ne pas suggérer de chercher une roue ou un abri derrière quelqu'un — il est seul
+→ Ces infos s'intègrent naturellement dans les phases, pas en liste séparée
 
 Identifie les 2 meilleurs moments pour "appuyer" et les 2 moments où il doit absolument "lever le pied".
 Donne de la couleur : une phrase de ressenti ou d'ambiance par phase (météo, paysage, fatigue probable à ce stade).
